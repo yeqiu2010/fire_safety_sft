@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Model files (large files)
+fire_safety_model/
+*.bin
+*.safetensors
+*.gguf
+*.mnn
+*.onnx
+
+# Model cache
+.cache/
+
+# Vector database files (large binary files)
+rag/vectordb/
+rag/vectordb_usearch/
+*.faiss
+*.usearch
+*.pkl
+
+# Export output
+export/
+
+# Logs
+*.log
+logs/
+
+# Test results (optional - may want to keep)
+# rag/test_results/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+
+# Secrets (if any)
+.env
+.env.local
+*.key
+*.pem
+
+# Claude Code
+.claude/
+
+# doc
+doc/
+test_results/
