@@ -47,13 +47,23 @@
 ```
 fire_safety_sft/
 ├── train.py                    # 模型微调脚本
-├── inference.py                # PC端推理脚本
-├── export_for_android.py       # Android端导出工具
+├── inference.py                # PC端 HuggingFace 推理
+├── test_gguf.py                # GGUF 模型测试脚本
+├── export_for_android.py       # Android端导出工具 (自动克隆编译 llama.cpp)
+├── llama.cpp                   # llama.cpp 源码 (自动克隆)
+├── requirements.txt            # 项目依赖
 │
 ├── fire_safety_model/          # 微调后模型
 │   ├── checkpoint-4200/
 │   ├── checkpoint-4400/        # 推荐 checkpoint
 │   └── final/
+│
+├── export/                     # 导出输出目录
+│   ├── fire_safety_fp16.gguf   # FP16 GGUF (~1.5GB)
+│   ├── fire_safety_q4_k_m.gguf # Q4_K_M 量化 (~530MB)
+│   ├── inference_config.json   # 推理配置
+│   ├── tokenizer/              # tokenizer 文件
+│   └── test_results.json       # 测试结果
 │
 └── rag/                        # RAG 检索增强模块
     ├── regulations/            # 法规文档源文件（24部 GB规范）经过MinerU预处理，转为Markdown格式
@@ -91,8 +101,9 @@ fire_safety_sft/
 | 文件 | 功能 | 关键特性 |
 |------|------|----------|
 | `train.py` | 模型微调训练 | 基于Qwen3.5-0.8B，支持早停、梯度累积、BF16训练 |
-| `inference.py` | PC端推理 | 支持单次问答、批量推理、流式输出 |
-| `export_for_android.py` | 模型导出 | 支持GGUF/MNN格式，用于移动端部署 |
+| `inference.py` | PC端 HuggingFace 推理 | 支持单次问答、批量推理、流式输出 |
+| `test_gguf.py` | GGUF 模型测试 | 验证导出的量化模型，支持交互模式 |
+| `export_for_android.py` | 模型导出 | 自动克隆/编译 llama.cpp，导出 GGUF/MNN 格式 |
 
 ### 4.2 RAG检索模块
 
@@ -217,12 +228,21 @@ python rag/rag_inference.py
 
 ### 7.2 Android端部署
 ```bash
-# 导出GGUF格式
+# 导出GGUF格式 (自动克隆并编译 llama.cpp)
 python export_for_android.py --method gguf --quantization q4_k_m
+
+# 测试导出的模型
+python test_gguf.py
 
 # 输出文件复制到Android assets
 cp export/fire_safety_q4_k_m.gguf android_app/assets/
 ```
+
+导出文件清单：
+- `fire_safety_q4_k_m.gguf` (~530MB) - Q4_K_M 量化模型
+- `fire_safety_fp16.gguf` (~1.5GB) - FP16 原始模型
+- `inference_config.json` - 推理配置 (温度、top_p等)
+- `tokenizer/` - tokenizer 文件
 
 ---
 
@@ -236,7 +256,7 @@ cp export/fire_safety_q4_k_m.gguf android_app/assets/
 | 关键词检索 | BM25 + jieba分词 |
 | 训练框架 | HuggingFace Transformers |
 | 移动端推理 | llama.cpp (GGUF) |
-| 开发语言 | Python 3.x |
+| 开发语言 | Python 3.12 |
 
 ---
 
@@ -264,4 +284,4 @@ cp export/fire_safety_q4_k_m.gguf android_app/assets/
 
 ---
 
-*文档生成日期：2026-04-23*
+*文档生成日期：2026-04-24*

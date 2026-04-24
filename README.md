@@ -10,26 +10,25 @@ pip install -r requirements.txt
 ### 2. 微调训练
 ```bash
 python train.py
-# 模型保存至: ./fire_safety_model/final/
+# 模型保存至: ./fire_safety_model/checkpoint-4400/
 ```
 
 ### 3. PC 端推理测试
 ```bash
+# HuggingFace 模型推理
 python inference.py
+
+# GGUF 模型测试 (Android 部署前验证)
+python test_gguf.py
+# 交互模式
+python test_gguf.py --interactive
 ```
 
 ### 4. 导出为 GGUF (Android 部署)
 ```bash
-# 先克隆并编译 llama.cpp
-git clone https://github.com/ggerganov/llama.cpp
-cd llama.cpp && mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j4
-cd ../..
-
-# 导出模型
-python export_for_android.py --method gguf --llama_cpp_path ./llama.cpp
-# 输出: ./export/fire_safety_q4_k_m.gguf (~350MB)
+# 自动克隆并编译 llama.cpp，导出 GGUF 模型
+python export_for_android.py --method gguf --quantization q4_k_m
+# 输出: ./export/fire_safety_q4_k_m.gguf (~530MB)
 ```
 
 ### 5. Android 集成
@@ -46,12 +45,30 @@ python export_for_android.py --method gguf --llama_cpp_path ./llama.cpp
 
 | 项目 | 说明 |
 |------|------|
-| 基础模型 | Qwen2.5-0.5B-Instruct (Qwen3.5-0.8B 可用后替换) |
+| 基础模型 | Qwen3.5-0.8B |
 | 训练数据 | sdzjoy/fire-safety-sft-dataset |
 | 训练方式 | Full fine-tuning (SFT) |
 | 上下文长度 | 512 tokens |
-| 量化格式 | GGUF Q4_K_M (~350MB) |
+| 量化格式 | GGUF Q4_K_M (~530MB) |
 | Android 框架 | llama.cpp JNI |
+
+## 项目结构
+
+```
+fire_safety_sft/
+├── train.py                    # 模型微调脚本
+├── inference.py                # PC端 HuggingFace 推理
+├── test_gguf.py                # GGUF 模型测试脚本
+├── export_for_android.py       # Android端导出工具
+├── llama.cpp                   # llama.cpp 源码 (自动克隆)
+├── fire_safety_model/          # 微调后模型
+│   └── checkpoint-4400/        # 推荐 checkpoint
+├── export/                     # 导出输出目录
+│   ├── fire_safety_q4_k_m.gguf # 量化模型
+│   ├── inference_config.json   # 推理配置
+│   └── tokenizer/              # tokenizer 文件
+└── rag/                        # RAG 检索增强模块
+```
 
 ## 显存需求
 
@@ -69,6 +86,9 @@ A: 运行 `train.py` 后查看日志中 `数据集字段:` 一行, 修改 `get_i
 
 **Q: 显存不足?**
 A: 在 `FireSafetyConfig` 中减小 `per_device_train_batch_size`, 增大 `gradient_accumulation_steps`。
+
+**Q: 导出 GGUF 时报错 "cmake not found"?**
+A: 需安装编译工具: `sudo apt install cmake build-essential`
 
 **Q: Android 模型加载慢?**
 A: 首次运行需从 assets 解压到 files 目录, 后续直接加载。也可预置到 SD 卡路径。

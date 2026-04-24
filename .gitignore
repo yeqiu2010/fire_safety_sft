@@ -38,6 +38,7 @@ env/
 
 # Model files (large files)
 fire_safety_model/
+llama.cpp/
 *.bin
 *.safetensors
 *.gguf

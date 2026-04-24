@@ -15,13 +15,15 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = "./fire_safety_model/final"     # 微调后模型
+MODEL_PATH = "./fire_safety_model/checkpoint-4400"     # 微调后模型
 OUTPUT_DIR = "./export"
 
 
 # ═══════════════════════════════════════════════════════
 # 方案A: 导出为 GGUF 格式 (推荐)
-# 依赖: pip install llama-cpp-python; 并克隆 llama.cpp 仓库
+# 依赖: pip install llama-cpp-python; 并克隆 llama.cpp 仓库（git clone https://github.com/ggml-org/llama.cpp.git）放在同级目录下
+# 系统（ubuntu）安装:
+#   sudo apt install cmake build-essential 用于编译 llama.cpp
 # ═══════════════════════════════════════════════════════
 def export_to_gguf(
     model_path: str = MODEL_PATH,
@@ -36,11 +38,20 @@ def export_to_gguf(
       3. 最终文件用于 Android llama.cpp JNI
     """
     os.makedirs(output_dir, exist_ok=True)
+
+    # 检查并克隆 llama.cpp
+    convert_script = os.path.join(llama_cpp_path, "convert_hf_to_gguf.py")
+    if not os.path.exists(convert_script):
+        logger.info(f"llama.cpp 未找到，正在克隆到 {llama_cpp_path}...")
+        subprocess.run(
+            ["git", "clone", "https://github.com/ggml-org/llama.cpp.git", llama_cpp_path],
+            check=True
+        )
+
     gguf_fp16 = os.path.join(output_dir, "fire_safety_fp16.gguf")
     gguf_q4   = os.path.join(output_dir, f"fire_safety_{quantization}.gguf")
 
     logger.info("步骤1: HuggingFace → GGUF (fp16)")
-    convert_script = os.path.join(llama_cpp_path, "convert_hf_to_gguf.py")
     cmd_convert = [
         "python", convert_script,
         model_path,
@@ -54,6 +65,14 @@ def export_to_gguf(
     quantize_bin = os.path.join(llama_cpp_path, "llama-quantize")
     if not os.path.exists(quantize_bin):
         quantize_bin = os.path.join(llama_cpp_path, "build", "bin", "llama-quantize")
+    if not os.path.exists(quantize_bin):
+        # 编译 llama.cpp
+        logger.info("llama-quantize 未找到，正在编译 llama.cpp...")
+        build_dir = os.path.join(llama_cpp_path, "build")
+        os.makedirs(build_dir, exist_ok=True)
+        subprocess.run(["cmake", ".."], cwd=build_dir, check=True)
+        subprocess.run(["cmake", "--build", ".", "--config", "Release"], cwd=build_dir, check=True)
+        quantize_bin = os.path.join(build_dir, "bin", "llama-quantize")
     cmd_quantize = [
         quantize_bin,
         gguf_fp16,
